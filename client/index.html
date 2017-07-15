@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <title>MiFans Market</title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <link href="css/style.css" rel="stylesheet">
+        <script src="https://unpkg.com/vue"></script>
+        <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.2.10/semantic.min.css">
+    </head>
+    <body>
+        <div id="app">
+
+            <!--navigation sidebar-->
+            <div class="ui left vertical sidebar inverted secondary labeled icon menu" style="background-color: #181c1b">
+                <a href="#" class="item" @click="getAllItems"><i class="home icon"></i>Home</a>
+                <a href="#" class="item"><i class="payment icon"></i>Payment</a>
+                <a href="#" class="item"><i class="sign in icon"></i>Sign In</a>
+                <a href="#" class="item"><i class="add user icon"></i>Sign Up</a>
+                <a href="#" class="item"><i class="sign out icon"></i>Sign Out</a>
+            </div>
+
+            <!--navigation header menu bar-->
+            <div class="ui inverted secondary icon top fixed menu" style="background-color: #ff6203">
+                <a id="toggle" class="item" v-on:click="goSideBar">
+                    <i class="large sidebar icon"></i>
+                </a>
+                <div class="item" style=" width: 280px; font-size: 1.3rem;">
+                    <i class="large xing square icon"></i>
+                        Xiaomi Fans House
+                </div>
+                <div class="item" style="width: 700px;">
+                    <div class="ui icon input">
+                        <input type="text" placeholder="Search here..." @keyup="showSearchItem" v-model="searchItem">
+                        <i class="search link icon"></i>
+                    </div>
+                </div>
+                <div class="right item">
+                    <a href="#" @click="goCartModalShow">
+                        <i class="icons">
+                            <i class="big cart in icon"></i>
+                            <div class="tinny floating ui blue circular label">{{ cartCount }}</div>
+                        </i>
+                    </a>
+                </div>
+            </div>
+
+            <!--all component to view bellow-->
+            <div class="pusher" style="padding-top: 70px;">
+
+                <!--item display and category column -->
+                <div class="ui fluid container" style="padding-left: 30px; padding-right: 10px; padding-bottom: 30px;">
+
+                    <!-- display items -->
+                    <div class="ui grid">
+                        <!--for card display-->
+                        <div class="thirteen wide column" style="width: 100%;">
+
+                            <!--card vue for-->
+                            <div class="ui special link cards" @mouseover="goDimmerEffect" v-if="items">
+                                <div class="card" v-for="item in items">
+                                    <div class="blurring dimmable image">
+                                        <div class="ui inverted dimmer">
+                                            <div class="content">
+                                                <div class="center">
+                                                    <div class="ui inverted orange button" @click="cartTemporaryItems(item._id)"><i class="cart in icon"></i>Tambahkan ke cart</div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <img :src="item.pict" alt="...">
+                                    </div>
+                                    <div class="content">
+                                        <div class="header">{{ item.name }}</div>
+                                        <div class="meta">
+                                            <span>{{ item.category }}</span>
+                                        </div>
+                                        <div class="description">Processor {{ item.procesor }}, Camera {{ item.camera }}, Garansi {{ item.waranti }}</div>
+                                    </div>
+                                    <div class="extra content">
+                                        <span class="right floated">Discon {{ item.promotion*100 }}<i class="percent icon"></i></span>
+                                        <span class="ui blue tag label">Rp. &nbsp&nbsp{{ item.price }}</span>
+                                    </div>
+                                    <div class="ui bottom attached button" @click="goDetailProductModal(item)"><i class="list icon"></i> &nbsp&nbspTampilkan Detail</div>
+                                </div>
+                            </div>
+                            <!--card finish-->
+                            <div class="ui special link cards" v-if="items[0] == null">
+                                <p style="font-size: 1.5em;">Uups ada masalah,kami akan mencoba yang terbaik untuk anda..</p>
+                            </div>
+
+                        </div>
+                        <div class="three wide column" style="padding-left: 0px;">
+                            <div class="ui vertical menu">
+                                <div class="item">
+                                    <div class="header">
+                                    Product Categories
+                                    </div>
+                                    <div class="menu">
+                                        <a class="item" v-on:click="getAllItems">All Categories</a>
+                                        <a class="item" v-on:click="showByCategory('Redmi Phone')">Redmi Phone</a>
+                                        <a class="item" v-on:click="showByCategory('Mi Phone')">Redmi Note Phone</a>
+                                        <a class="item" v-on:click="showByCategory('Power Bank')">Mi Power Bank</a>
+                                        <a class="item" v-on:click="showByCategory('Mi Band')">Mi Accesories</a>
+                                    </div>
+                                </div>
+                                <div class="item">
+                                    <div class="header">
+                                    Register to joint
+                                    </div>
+                                    <div class="menu">
+                                    <a class="item">Register</a>
+                                    </div>
+                                </div>
+                                <div class="item">
+                                    <div class="header">
+                                    Support
+                                    </div>
+                                    <div class="menu">
+                                    <a class="item">Email Support</a>
+                                    <a class="item">FAQ's</a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!--modal base-->
+                <!--modal for detail product-->
+                <div class="ui long modal" id="modal-detail-product">
+                    <i class="close icon"></i>
+                    <div class="header">
+                        <i class="list icon"></i>
+                        Detail Product
+                    </div>
+                    <div class="image content">
+                        <div class="ui medium image">
+                            <img :src="itemDetail.pict">
+                        </div>
+                        <div class="description">
+                            <h2 class="ui header">
+                                <i class="barcode icon"></i>
+                                <div class="content">{{ itemDetail.name }} <div class="sub header">
+                                    {{ itemDetail.category }}</div></div>
+                            </h2>
+                            <p>{{ itemDetail.description }}</p>
+                            <table class="ui invereted gray celled stripped table" style="padding-bottom: 30px;">
+                                <thead>
+                                    <tr>
+                                        <th colspan="2">Xiaomi</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td class="collapsing"><b>Harga</b></td>
+                                        <td>{{ itemDetail.price }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="collapsing"><b>Stock</b></td>
+                                        <td>{{ itemDetail.stock }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="collapsing"><b>Processor</b></td>
+                                        <td>{{ itemDetail.procesor }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="collapsing"><b>Kamera</b></td>
+                                        <td>{{ itemDetail.camera }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="collapsing"><b>Garansi</b></td>
+                                        <td>*{{ itemDetail.waranti }}, Berlaku di toko yang telah ditunjuk</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="collapsing"><b>Harga Khusus</b></td>
+                                        <td>{{ discountPrice }}, *Syarat ketentuan berlaku</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="actions">
+                            <div class="ui black deny button">
+                                Ok
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!--Modal for cart-->
+                <div class="ui modal" id="cart-modal">
+                    <i class="close icon"></i>
+                    <div class="header">
+                        <i class="shopping bag icon"></i>
+                        Your Request Products
+                    </div>
+                    <div class="content">
+                        <table class="ui compact celled definition table">
+                            <thead class="full-width">
+                                <tr>
+                                    <th>Product Name</th>
+                                    <th>Request Date</th>
+                                    <th>Waranty Time</th>
+                                    <th>Price of Product</th>
+                                    <th>Total Product</th>
+                                    <th>Total Price</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr v-for="cartItem in cartItems">
+                                    <td>
+                                    <h4 class="ui image header">
+                                        <!-- :src from list.pict -->
+                                        <img :src="cartItem.pict" alt="..." class="ui mini rounded image">
+                                        <div class="content">
+                                        <!-- name -->
+                                        {{ cartItem.name }}
+                                        <div class="sub header">
+                                            <!-- category -->
+                                            {{ cartItem.category }}
+                                        </div>
+                                        </div>
+                                    </h4>
+                                    </td>
+                                    <td>{{ cartItem.date }}</td>
+                                    <td>{{ cartItem.waranti }}</td>
+                                    <td>Rp. {{ cartItem.price }}</td>
+                                    <td>{{ cartItem.total_item }}</td>
+                                    <td>{{ cartItem.total_price }}</td>
+                                </tr>
+                                <tr>
+                                    <td colspan="3"><b>Total Payment</b></td>
+                                    <td></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        <br />
+                        <br />
+                        <p>*Ini adalah seluruh cart dari produk-produk yang sudah anda pilih sebelumnya, pastikan semu telah benar jika ingin melanjutkan ke pembayaran!</p>
+                    </div>
+                    <div class="actions">
+                        <div class="ui black deny button" v-on:click="getEmptyCart">
+                            Tidak, Lain kali
+                        </div>
+                        <div class="ui positive right labeled icon button">
+                            Ya, Saya ingin bayar
+                            <i class="tags icon"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="ui modal" id="cart-detail-modal">
+                    <i class="close icon"></i>
+                    <div class="header">
+                        <i class="shopping bag icon"></i>
+                        Your Request Products
+                    </div>
+                    <div class="content">
+                        <div class="ui attached warning message">
+                            <i class="warning icon"></i>
+                            <p>Anda telah memasukkan ke keranjang sebelumnya, silahkan masukkan jumlah barang yang ingin di pesan</p>
+                        </div>
+                        <table class="ui compact celled definition table">
+                            <thead class="full-width">
+                                <tr>
+                                    <th>Product Name</th>
+                                    <th>Request Date</th>
+                                    <th>Waranty Time</th>
+                                    <th>Price of Product</th>
+                                    <th>Total Product</th>
+                                    <th>Total Price</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>
+                                    <h4 class="ui image header">
+                                        <!-- :src from list.pict -->
+                                        <img :src="cartItemDetail.pict" alt="..." class="ui mini rounded image">
+                                        <div class="content">
+                                        <!-- name -->
+                                        {{ cartItemDetail.name }}
+                                        <div class="sub header">
+                                            <!-- category -->
+                                            {{ cartItemDetail.category }}
+                                        </div>
+                                        </div>
+                                    </h4>
+                                    </td>
+                                    <td>{{ cartItemDetail.date }}</td>
+                                    <td>{{ cartItemDetail.waranti }}</td>
+                                    <td>Rp. {{ cartItemDetail.price }}</td>
+                                    <td>
+                                        <input type="text" v-model="updateTotalItem" />
+                                    </td>
+                                    <td>{{ cartItemDetail.total_price }}</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        <br />
+                        <br />
+                        <p>*Ini adalah seluruh cart dari produk-produk yang sudah anda pilih sebelumnya, pastikan semu telah benar jika ingin melanjutkan ke pembayaran!</p>
+                    </div>
+                    <div class="actions">
+                        <div class="ui black deny button">
+                            Tidak, Lain kali
+                        </div>
+                        <div class="ui positive right labeled icon button" @click="pushToCartUpToDate(cartItemDetail.id)">
+                            Ya, Saya ingin bayar
+                            <i class="tags icon"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- footer -->
+                <div class="ui fluid container">
+                    <div class="ui inverted vertical footer segment" style="height: 230px; padding-top: 50px;">
+                        <div class="ui container">
+                            <div class="ui stackable inverted divided equal height stackable grid">
+                                <div class="three wide column">
+                                    <h4 class="ui inverted header">About</h4>
+                                    <div class="ui inverted link list">
+                                    <a href="#" class="item">Sitemap</a>
+                                    <a href="#" class="item">Contact Us</a>
+                                    <a href="#" class="item">Religious Ceremonies</a>
+                                    <a href="#" class="item">Gazebo Plans</a>
+                                    </div>
+                                </div>
+                                <div class="three wide column">
+                                    <h4 class="ui inverted header">Services</h4>
+                                    <div class="ui inverted link list">
+                                    <a href="#" class="item">Banana Pre-Order</a>
+                                    <a href="#" class="item">DNA FAQ</a>
+                                    <a href="#" class="item">How To Access</a>
+                                    <a href="#" class="item">Favorite X-Men</a>
+                                    </div>
+                                </div>
+                                <div class="seven wide column">
+                                    <h4 class="ui inverted header">Footer Header</h4>
+                                    <p>Extra space for a call to action inside the footer that could help re-engage users.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!--script base-->
+        <script
+        src="https://code.jquery.com/jquery-3.1.1.min.js"
+        integrity="sha256-hVVnYaiADRTO2PzUGmuLJr8BLUSjGIZsDYGmIJLv2b8="
+        crossorigin="anonymous">
+        </script>
+        <script src="/js/framework.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.2.10/semantic.min.js"></script>
+    </body>
+</html>
